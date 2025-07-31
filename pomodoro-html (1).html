@@ -468,6 +468,15 @@
             opacity: 0.5;
         }
 
+        .empty-tasks-message {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-tasks-submessage {
+            font-size: 0.9rem;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -603,7 +612,7 @@
             </div>
             <div class="header-right">
                 <div class="sessions-count">Sessions: <span id="sessions">0</span></div>
-                <button class="settings-btn" onclick="openSettings()">
+                <button class="settings-btn" onclick="openSettings()" title="Open Settings">
                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -663,11 +672,11 @@
 
             <div class="task-input-container">
                 <input type="text" class="task-input" id="taskInput" placeholder="Add a new task..." onkeypress="handleTaskInputKeypress(event)">
-                <button class="add-task-btn" onclick="addTask()">
+                <button class="add-task-btn" onclick="addTask()" title="Add Task">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                </button>
+                    <p class="empty-tasks-message">No tasks yet</p>
+                    <p class="empty-tasks-submessage">Add one above to get started!</p>
             </div>
 
             <div class="tasks-list" id="tasksList">
@@ -675,8 +684,8 @@
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No tasks yet</p>
-                    <p style="font-size: 0.9rem;">Add one above to get started!</p>
+                    <p class="empty-tasks-message">No tasks yet</p>
+                    
                 </div>
             </div>
         </div>
@@ -695,17 +704,17 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Work Duration (minutes)</label>
+                <label class="form-label" for="workTimeInput">Work Duration (minutes)</label>
                 <input type="number" class="form-input" id="workTimeInput" min="1" max="60" value="25">
             </div>
 
             <div class="form-group">
-                <label class="form-label">Short Break Duration (minutes)</label>
+                <label class="form-label" for="shortBreakInput">Short Break Duration (minutes)</label>
                 <input type="number" class="form-input" id="shortBreakInput" min="1" max="30" value="5">
             </div>
 
             <div class="form-group">
-                <label class="form-label">Long Break Duration (minutes)</label>
+                <label class="form-label" for="longBreakInput">Long Break Duration (minutes)</label>
                 <input type="number" class="form-input" id="longBreakInput" min="1" max="60" value="15">
             </div>
 
@@ -775,7 +784,13 @@
             document.querySelectorAll('.mode-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            document.querySelector(`.mode-btn.${mode === 'shortBreak' ? 'short-break' : mode === 'longBreak' ? 'long-break' : 'work'}`).classList.add('active');
+            let modeClassName = 'work';
+            if (mode === 'shortBreak') {
+                modeClassName = 'short-break';
+            } else if (mode === 'longBreak') {
+                modeClassName = 'long-break';
+            }
+            document.querySelector(`.mode-btn.${modeClassName}`).classList.add('active');
 
             // Update start button
             if (isActive) {
@@ -875,7 +890,15 @@
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 1);
             } catch (error) {
-                console.log('Audio notification not available');
+                console.error('Audio notification error:', error.message);
+                // Fallback to visual notification
+                new Notification('Pomodoro Timer', {
+                    body: 'Time is up!',
+                    icon: '/favicon.ico'
+                }).catch(() => {
+                    // If notifications are not supported or permitted, log silently
+                    console.info('Notifications not available');
+                });
             }
         }
 
